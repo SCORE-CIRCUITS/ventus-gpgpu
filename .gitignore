@@ -24,3 +24,4 @@ GPGPU_top.anno.json
 sim-verilator/verilog-out/
 
 gen_fpga_verilog/
+sim-verilator/build/

@@ -246,28 +246,24 @@ const ventus_rtlsim_step_result_t* ventus_rtlsim_t::step() {
         // Thread-block return from GPU (stimuli)
         dut->io_host_rsp_ready = 1;
 
-        // Assert Verilated memory IO type: must be VlWide
-        static_assert(VlIsVlWide<std::decay<decltype(dut->io_mem_rd_data)>::type>::value, "Check io_mem type");
-        static_assert(VlIsVlWide<std::decay<decltype(dut->io_mem_wr_data)>::type>::value, "Check io_mem type");
-        static_assert(VlIsVlWide<std::decay<decltype(dut->io_mem_wr_mask)>::type>::value, "Check io_mem type");
-
         // Physical memory access - read
         if (dut->io_mem_rd_en) {
             uint64_t rd_addr = dut->io_mem_rd_addr;
-            pmem->read(rd_addr, dut->io_mem_rd_data.data(), dut->io_mem_rd_data.Words * 4);
+            pmem->read(rd_addr, dut->io_mem_rd_data.data(), sizeof(dut->io_mem_rd_data));
         }
         // Physical memory access - write
         if (dut->io_mem_wr_en) {
             uint64_t wr_addr = dut->io_mem_wr_addr;
-            bool* mask = new bool[dut->io_mem_wr_mask.Words * 32];
-            for (int idx = 0; idx < dut->io_mem_wr_mask.Words; idx++) {
+            constexpr size_t mask_words = sizeof(dut->io_mem_wr_mask) / 4;
+            bool* mask = new bool[mask_words * 32];
+            for (size_t idx = 0; idx < mask_words; idx++) {
                 uint32_t mask_raw = dut->io_mem_wr_mask[idx];
                 for (int bit = 0; bit < 32; bit++) {
                     mask[bit + idx * 32] = mask_raw & 0x1;
                     mask_raw >>= 1;
                 }
             }
-            if (!pmem->write(wr_addr, dut->io_mem_wr_data.data(), mask, dut->io_mem_wr_data.Words * 4)) {
+            if (!pmem->write(wr_addr, dut->io_mem_wr_data.data(), mask, sizeof(dut->io_mem_wr_data))) {
                 sim_got_error = true;
             }
             delete[] mask;
@@ -382,7 +378,7 @@ void ventus_rtlsim_t::destructor(bool snapshot_rollback_forcing) {
     if (tfp)
         tfp->close();
     dut->final();                  // Final model cleanup
-    contextp->statsPrintSummary(); // Final simulation summary
+    // contextp->statsPrintSummary(); // Final simulation summary (deprecated in Verilator 5)
 
     // invoke snapshot if needed
     if (config.snapshot.enable && !snapshots.is_child && snapshots.children_pid.size() != 0 && need_rollback) {

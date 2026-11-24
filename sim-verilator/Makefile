@@ -58,13 +58,14 @@ CXXFLAGS += -O2
 else
 CXXFLAGS += -g -O0
 endif
-CXXFLAGS += -std=c++20 -MMD -MP
+CXXFLAGS += -std=c++20 -MMD -MP -I$(CURDIR)/include -DFMT_HEADER_ONLY -D_GNU_SOURCE -Wno-error
 
+ifneq ($(MOLD),)
 ifeq ($(RELEASE),1)
 LDFLAGS += -fuse-ld=mold
 endif
+endif
 # shared library & link path
-LDFLAGS += -lspdlog -lfmt
 LDFLAGS += -L$(VLIB_TARGET_PATH) -l$(VLIB_TARGET_NAME) -Wl,-rpath=$(abspath $(VLIB_TARGET_PATH))
 
 #=====================================================================

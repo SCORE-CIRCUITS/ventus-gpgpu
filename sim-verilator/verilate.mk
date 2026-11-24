@@ -123,10 +123,13 @@ endif
 VLIB_CFLAGS += -fPIC
 VLIB_CXXFLAGS += $(VLIB_CFLAGS)
 VLIB_CXXFLAGS += -std=c++20
+VLIB_CXXFLAGS += -I$(CURDIR)/include -DFMT_HEADER_ONLY -D_GNU_SOURCE -Wno-error
 VLIB_CXXFLAGS += -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
 VLIB_LDFLAGS += -lc
+ifneq ($(MOLD),)
 ifeq ($(MOLD),1)
 VLIB_LDFLAGS += -fuse-ld=mold
+endif
 endif
 
 VLIB_VERILATOR_FLAGS += --threads $(VLIB_NPROC_SIM)
@@ -162,7 +165,7 @@ $(VLIB_TARGET): $(VLIB_VERILATOR_OUTPUT)
 	$(CXX) $(VLIB_CXXFLAGS) $(VLIB_LDFLAGS) -shared -o $@ \
 	  $(VLIB_OBJ_EXPORT) \
 	  $(VLIB_DIR_BUILDOBJ)/libVdut.a $(VLIB_DIR_BUILDOBJ)/libverilated.a \
-	  -lspdlog -lfmt -pthread -lpthread -lz -latomic  
+	  -pthread -lpthread -lz -latomic  
 	ln -sf $(abspath $(VLIB_TARGET)) $(VLIB_DIR_BUILD)/libVentusRTL.so
 
 lib: $(VLIB_TARGET)

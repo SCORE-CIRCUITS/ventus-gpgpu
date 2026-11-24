@@ -71,13 +71,21 @@ int main(int argc, char* argv[]) {
     //
     // Run simulation, each step stands for 1 simulation time-unit
     //
+    uint64_t total_cycles = 0;
     const ventus_rtlsim_step_result_t* result;
     while (1) {
         result = ventus_rtlsim_step(sim);
+        total_cycles++;
         if (result->error || result->idle || result->time_exceed) {
             break;
         }
     }
+
+    fmt::print("\n========================================\n");
+    fmt::print("Ventus GPGPU Simulation Complete\n");
+    fmt::print("Total simulation clock cycles: {}\n", total_cycles);
+    fmt::print("Status: {}\n", (result->idle && !result->error) ? "PASSED" : (result->time_exceed ? "TIME_EXCEED" : "ERROR"));
+    fmt::print("========================================\n\n");
 
     //
     // Finish simulation, release resources
